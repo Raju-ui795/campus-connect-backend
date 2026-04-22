@@ -8,7 +8,6 @@ require('dotenv').config();
 const app = express();
 const server = http.createServer(app);
 
-// ✅ Allow all these origins
 const allowedOrigins = [
   'http://localhost:3000',
   'https://campus.packtek.site',
@@ -18,7 +17,6 @@ const allowedOrigins = [
 
 const corsOptions = {
   origin: function (origin, callback) {
-    // Allow requests with no origin (mobile apps, curl, Postman)
     if (!origin) return callback(null, true);
     if (allowedOrigins.includes(origin)) {
       callback(null, true);
@@ -33,8 +31,8 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json());
 
-// ✅ Health check endpoint
-app.get('/health', (req, res) => res.json({ status: 'ok' }));
+// Health check
+app.get('/health', (req, res) => res.json({ status: 'ok', time: new Date().toISOString() }));
 
 // Routes
 app.use('/api/auth', require('./routes/auth'));
@@ -44,10 +42,7 @@ app.use('/api/profile', require('./routes/profile'));
 
 // Socket.io
 const io = new Server(server, {
-  cors: {
-    origin: allowedOrigins,
-    methods: ['GET', 'POST'],
-  },
+  cors: { origin: allowedOrigins, methods: ['GET', 'POST'] },
 });
 
 const messages = [];
