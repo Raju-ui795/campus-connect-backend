@@ -8,16 +8,21 @@ require('dotenv').config();
 const app = express();
 const server = http.createServer(app);
 
+const allowedOrigins = [
+  process.env.CLIENT_URL || 'http://localhost:3000',
+  'http://localhost:3000',
+  'https://campus-connect-backend-oamz.onrender.com',
+];
+
 const io = new Server(server, {
-  cors: {
-    origin: process.env.CLIENT_URL || 'http://localhost:3000',
-    methods: ['GET', 'POST'],
-  },
+  cors: { origin: allowedOrigins, methods: ['GET', 'POST'] },
 });
 
-// Middleware
-app.use(cors({ origin: process.env.CLIENT_URL || 'http://localhost:3000' }));
+app.use(cors({ origin: allowedOrigins, credentials: true }));
 app.use(express.json());
+
+// Health check
+app.get('/health', (req, res) => res.json({ status: 'ok' }));
 
 // Routes
 app.use('/api/auth', require('./routes/auth'));
@@ -30,29 +35,24 @@ const messages = [];
 io.on('connection', (socket) => {
   console.log('User connected:', socket.id);
   socket.emit('load_messages', messages.slice(-50));
-
   socket.on('send_message', (data) => {
     const msg = { ...data, timestamp: new Date().toISOString() };
     messages.push(msg);
     io.emit('receive_message', msg);
   });
-
-  socket.on('disconnect', () => {
-    console.log('User disconnected:', socket.id);
-  });
+  socket.on('disconnect', () => console.log('User disconnected:', socket.id));
 });
 
-// Start server after DB is ready
 const PORT = process.env.PORT || 5000;
 
 initDB()
   .then(() => {
     server.listen(PORT, () => {
-      console.log(`✅ MySQL connected & tables ready`);
-      console.log(`🚀 Server running on port ${PORT}`);
+      console.log('MySQL connected & tables ready');
+      console.log('Server running on port ' + PORT);
     });
   })
   .catch((err) => {
-    console.error('❌ Database connection failed:', err.message);
-    console.error('Make sure MySQL is running and your .env is correct');
+    console.error('Database connection failed:', err.message);
+    process.exit(1);
   });

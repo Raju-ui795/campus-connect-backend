@@ -8,12 +8,13 @@ const pool = mysql.createPool({
   database: process.env.DB_NAME || 'u862506807_Campus',
   waitForConnections: true,
   connectionLimit: 10,
+  connectTimeout: 30000,
+  ssl: false,
 });
 
 const initDB = async () => {
   const conn = await pool.getConnection();
 
-  // Users table
   await conn.execute(`
     CREATE TABLE IF NOT EXISTS users (
       id INT AUTO_INCREMENT PRIMARY KEY,
@@ -28,7 +29,6 @@ const initDB = async () => {
     )
   `);
 
-  // Announcements table
   await conn.execute(`
     CREATE TABLE IF NOT EXISTS announcements (
       id INT AUTO_INCREMENT PRIMARY KEY,
@@ -42,7 +42,6 @@ const initDB = async () => {
     )
   `);
 
-  // Events table
   await conn.execute(`
     CREATE TABLE IF NOT EXISTS events (
       id INT AUTO_INCREMENT PRIMARY KEY,
@@ -59,7 +58,6 @@ const initDB = async () => {
     )
   `);
 
-  // Event registrations table
   await conn.execute(`
     CREATE TABLE IF NOT EXISTS event_registrations (
       id INT AUTO_INCREMENT PRIMARY KEY,
@@ -72,7 +70,6 @@ const initDB = async () => {
     )
   `);
 
-  // Achievements table
   await conn.execute(`
     CREATE TABLE IF NOT EXISTS achievements (
       id INT AUTO_INCREMENT PRIMARY KEY,
@@ -85,7 +82,7 @@ const initDB = async () => {
   `);
 
   conn.release();
-  console.log('✅ All tables created/verified');
+  console.log('All tables created/verified');
 };
 
 module.exports = { pool, initDB };
